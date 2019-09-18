@@ -1,0 +1,12 @@
+# Notes to walk through a cisco/juniper router configuration file by using <fh>
+
+ open my $fh, '<', "[FILE_NAME/LOCATION]";
+ while (<$fh>) {
+   if (/[MATCH_CRITERIA]/) {
+    while ($config = <$fh>) {
+      if ($config =~ /[MATCH_CRITERIA/) {
+        [CODE TO DO THINGS IF MATCHED]
+      }
+    }
+   }
+ }
