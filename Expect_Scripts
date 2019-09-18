@@ -1,0 +1,58 @@
+# Simple Expect login script to login to devices
+
+#!/usr/bin/expect
+
+set user "[USERNAME]"
+set password "[PASSWORD]"
+set hostname [lindex $argv 0];
+
+spawn ssh "$user\@$hostname"
+expect "ssword:"
+send "$password\r"
+
+interact
+
+
+# More advanced expect script to login to devices and take data
+
+use Expect;
+use Data::Dumper;
+
+$usr = '[USERNAME]';
+$pass = '[PASSWORD]';
+$enab = '[ENABLE_PASSWORD]';
+$host = shift;
+
+open FILE_NAME_VARIABLE, '>> [FILENAME]'; # <-- open file for data printing
+
+while (1) {
+  $EXP = Expect->spawn("ssh $usr\@$host") or die ("Cannot login to $host using ssh, please check ssh is enable\n");
+  $EXP->log_stdout(0); # <-- set to 1 to print to screen for debugging
+  
+  # Logging into device section
+  $EXP->expect(10, re => "ssword:");
+  $EXP->send("$pass\r");
+  $EXP->expect(10, -re => ">");
+  $EXP->send("enable\r");
+  $EXP->expect(10, re => "Password:");
+  $EXP->send("$enab\r");
+  $EXP->expect(5, -re => "#");
+
+  # Gather data from device section
+  $EXP->send("terminal length 0\r");
+  $EXP->expect(2, -re => "#");
+  $EXP->send("[DATA_GATHERING_COMMANDS");
+  $EXP->expect(2, -re => "$host#");
+  $VARIABLE = $EXP->before(); # <--store data from previous commands to a variable or array
+  $EXP->close();
+
+  print FILE_NAME_VARIABLE "[VARIABLE OR ARRAY DATA]\n";
+
+  close FILE_NAME_VARIABLE;
+  
+  # USE MAILX TO SEND EMAIL WITH DATA
+  
+  qx(echo "[EMAIL TEXT CONTENTS]" | mailx -a [FILE_TO_ATTACH] -s "[EMAIL_SUBJECT]" [EMAIL_ADDRESS]);
+  
+  # Additional commands such as sleep can be added to pause the while loop for a given duration
+}
